@@ -8,8 +8,7 @@ use tokio::fs;
 
 use crate::authentication_manager::ServiceAccount;
 use crate::error::Error;
-use crate::types::{HyperClient, Token};
-use crate::util::HyperExt;
+use crate::types::Token;
 
 #[derive(Debug)]
 pub(crate) struct CustomServiceAccount {
@@ -44,7 +43,7 @@ impl ServiceAccount for CustomServiceAccount {
         use crate::jwt::Claims;
         use crate::jwt::JwtSigner;
         use crate::jwt::GRANT_TYPE;
-        use hyper::header;
+        use reqwest::header;
         use url::form_urlencoded;
 
         let signer = JwtSigner::new(&self.credentials.private_key)?;

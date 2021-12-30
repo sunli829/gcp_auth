@@ -69,7 +69,6 @@ mod error;
 mod gcloud_authorized_user;
 mod jwt;
 mod types;
-mod util;
 
 use custom_service_account::CustomServiceAccount;
 
@@ -79,8 +78,7 @@ pub use types::Token;
 
 use std::path::Path;
 
-use hyper::Client;
-use hyper_rustls::HttpsConnectorBuilder;
+use reqwest::Client;
 
 /// Initialize GCP authentication based on a credentials file
 ///

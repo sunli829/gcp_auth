@@ -78,9 +78,6 @@ where
     Ok(s)
 }
 
-pub(crate) type HyperClient =
-    hyper::Client<hyper_rustls::HttpsConnector<hyper::client::HttpConnector>>;
-
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -2,13 +2,10 @@ use std::str;
 use std::sync::RwLock;
 
 use async_trait::async_trait;
-use hyper::body::Body;
-use hyper::{Method, Request};
 
 use crate::authentication_manager::ServiceAccount;
 use crate::error::Error;
-use crate::types::{HyperClient, Token};
-use crate::util::HyperExt;
+use crate::types::Token;
 
 #[derive(Debug)]
 pub(crate) struct DefaultServiceAccount {

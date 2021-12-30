@@ -3,7 +3,6 @@ use crate::error::Error;
 use crate::error::Error::{
     GCloudError, GCloudNotFound, GCloudParseError, NoProjectId, ParsingError,
 };
-use crate::types::HyperClient;
 use crate::Token;
 use async_trait::async_trait;
 use serde_json::json;

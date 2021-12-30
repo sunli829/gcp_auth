@@ -1,8 +1,9 @@
 use async_trait::async_trait;
+use reqwest::Client;
 use tokio::sync::Mutex;
 
 use crate::error::Error;
-use crate::types::{HyperClient, Token};
+use crate::types::Token;
 
 #[async_trait]
 pub(crate) trait ServiceAccount: Send + Sync {
@@ -15,13 +16,13 @@ pub(crate) trait ServiceAccount: Send + Sync {
 ///
 /// Cacheing for the full life time is ensured
 pub struct AuthenticationManager {
-    pub(crate) client: HyperClient,
+    pub(crate) client: Client,
     pub(crate) service_account: Box<dyn ServiceAccount>,
     refresh_mutex: Mutex<()>,
 }
 
 impl AuthenticationManager {
-    pub(crate) fn new(client: HyperClient, service_account: Box<dyn ServiceAccount>) -> Self {
+    pub(crate) fn new(client: Client, service_account: Box<dyn ServiceAccount>) -> Self {
         Self {
             client,
             service_account,

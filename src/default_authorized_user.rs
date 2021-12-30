@@ -2,15 +2,13 @@ use std::path::Path;
 use std::sync::RwLock;
 
 use async_trait::async_trait;
-use hyper::body::Body;
-use hyper::{Method, Request};
+use reqwest::{Client, Request};
 use serde::{Deserialize, Serialize};
 use tokio::fs;
 
 use crate::authentication_manager::ServiceAccount;
 use crate::error::Error;
-use crate::types::{HyperClient, Token};
-use crate::util::HyperExt;
+use crate::types::Token;
 
 #[derive(Debug)]
 pub(crate) struct DefaultAuthorizedUser {
@@ -27,31 +25,26 @@ impl DefaultAuthorizedUser {
         Ok(Self { token })
     }
 
-    fn build_token_request<T: serde::Serialize>(json: &T) -> Request<Body> {
-        Request::builder()
-            .method(Method::POST)
-            .uri(Self::DEFAULT_TOKEN_GCP_URI)
-            .header("content-type", "application/json")
-            .body(Body::from(serde_json::to_string(json).unwrap()))
-            .unwrap()
-    }
-
-    async fn get_token(client: &HyperClient) -> Result<Token, Error> {
+    async fn get_token(client: &Client) -> Result<Token, Error> {
         log::debug!("Loading user credentials file");
         let mut home = dirs_next::home_dir().ok_or(Error::NoHomeDir)?;
         home.push(Self::USER_CREDENTIALS_PATH);
         let cred = UserCredentials::from_file(home.display().to_string()).await?;
-        let req = Self::build_token_request(&RefreshRequest {
-            client_id: cred.client_id,
-            client_secret: cred.client_secret,
-            grant_type: "refresh_token".to_string(),
-            refresh_token: cred.refresh_token,
-        });
         let token = client
-            .request(req)
+            .post(Self::DEFAULT_TOKEN_GCP_URI)
+            .header("content-type", "application/json")
+            .json(&RefreshRequest {
+                client_id: cred.client_id,
+                client_secret: cred.client_secret,
+                grant_type: "refresh_token".to_string(),
+                refresh_token: cred.refresh_token,
+            })
+            .send()
             .await
             .map_err(Error::OAuthConnectionError)?
-            .deserialize()
+            .error_for_status()
+            .map_err(|err| Error::ServerUnavailable(err.to_string()))?
+            .json()
             .await?;
         Ok(token)
     }
@@ -67,7 +60,7 @@ impl ServiceAccount for DefaultAuthorizedUser {
         Some(self.token.read().unwrap().clone())
     }
 
-    async fn refresh_token(&self, client: &HyperClient, _scopes: &[&str]) -> Result<Token, Error> {
+    async fn refresh_token(&self, client: &Client, _scopes: &[&str]) -> Result<Token, Error> {
         let token = Self::get_token(client).await?;
         *self.token.write().unwrap() = token.clone();
         Ok(token)
